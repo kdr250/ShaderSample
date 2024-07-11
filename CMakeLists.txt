@@ -1,21 +1,20 @@
 ﻿cmake_minimum_required(VERSION 3.19)
 
+if (DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+    cmake_path(SET VCPKG_PATH NORMALIZE $ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake)
+    set(CMAKE_TOOLCHAIN_FILE ${VCPKG_PATH} CACHE STRING "")
+endif()
+
 project(SfmlWithCMake VERSION 1.0)
 
-include(FetchContent)
+find_package(SFML COMPONENTS system window graphics CONFIG REQUIRED)
 
-set(BUILD_SHARED_LIBS OFF)
-FetchContent_Declare(
-	SFML
-	GIT_REPOSITORY https://github.com/SFML/SFML.git
-	GIT_TAG 2.5.1
-)
-FetchContent_MakeAvailable(SFML)
-
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED true)
 
-include_directories(include)
+add_compile_options("$<$<C_COMPILER_ID:MSVC>:/utf-8>")
+add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
+add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/Zc:__cplusplus>")
 
 file(GLOB_RECURSE SOURCES "src/*.cpp")
 
@@ -24,8 +23,8 @@ add_executable(
 	${SOURCES}
 )
 target_link_libraries(
-	SfmlWithCMake
-	sfml-graphics
+	SfmlWithCMake PRIVATE
+	sfml-system sfml-network sfml-graphics sfml-window sfml-main
 )
 
 add_custom_command(

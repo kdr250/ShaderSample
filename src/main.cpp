@@ -39,8 +39,6 @@ int main()
     {
         throw std::runtime_error("Error while loading texture");
     }
-    // enable the smooth filter. the texture appears smoother so that pixels are less noticeable
-    sampleTexture.setSmooth(true);
 
     sf::Font font;
     font.loadFromFile("resources/font/Roboto-Light.ttf");

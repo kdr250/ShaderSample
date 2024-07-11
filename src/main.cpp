@@ -7,7 +7,7 @@
 int main()
 {
     sf::RenderWindow window(sf::VideoMode(1280, 768),
-                            "Shader Smaple2",
+                            "Shader Smaple",
                             sf::Style::Titlebar | sf::Style::Close);
 
     int shaderIndex                      = 0;

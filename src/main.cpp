@@ -1,60 +1,54 @@
 #include <SFML/Graphics.hpp>
 #include <iostream>
 #include <vector>
+#include <stdexcept>
+#include <memory>
 
 int main()
 {
-    std::vector<std::string> shaderFiles = {"resources/shader/shader_fade.frag",
-                                            "resources/shader/shader_red.frag",
-                                            "resources/shader/shader_shake.frag",
-                                            "resources/shader/shader_breathe.frag"};
-
-    size_t currentShaderIndex = 0;
-
-    sf::RenderWindow window(sf::VideoMode(256, 256),
-                            "Shader Sample",
+    sf::RenderWindow window(sf::VideoMode(1280, 768),
+                            "Shader Smaple2",
                             sf::Style::Titlebar | sf::Style::Close);
 
-    // create a window size texture and a sprite for the shader
-    sf::Texture tex;
-    tex.create(256, 256);
-    sf::Sprite spr(tex);
+    int shaderIndex                      = 0;
 
-    // enable vertical sync. (vsync)
-    window.setVerticalSyncEnabled(true);
+    std::vector<std::string> shaderNames = {"shader_fade.frag",
+                                            "shader_red.frag",
+                                            "shader_shake.frag",
+                                            "shader_breathe.frag"};
 
-    // create texture from PNG file
-    sf::Texture texture;
-    if (!texture.loadFromFile("resources/shader/icon-small.png"))
+    std::vector<sf::Shader> shaders(shaderNames.size());
+
+    for (int i = 0; i < shaderNames.size(); i++)
     {
-        std::cerr << "Error while loading texture" << std::endl;
-        return -1;
+        std::string name = shaderNames[i];
+        shaders[i].loadFromFile("resources/shader/" + name, sf::Shader::Fragment);
     }
-    // enable the smooth filter. the texture appears smoother so that pixels are less noticeable
-    texture.setSmooth(true);
 
-    // create the sprite and apply the texture
+    sf::Texture texture;
+    texture.create(window.getSize().x, window.getSize().y);
+
     sf::Sprite sprite;
     sprite.setTexture(texture);
-    sf::FloatRect spriteSize = sprite.getGlobalBounds();
+    sprite.setPosition(window.getSize().x / 2.0f, window.getSize().y / 2.0f);
+    sprite.setScale(sf::Vector2f(0.1f, 0.1f));
 
-    // set origin in the middle of the sprite
-    sprite.setOrigin(spriteSize.width / 2, spriteSize.height / 2);
-    sprite.setScale(4.0, 4.0);
-
-    if (!sf::Shader::isAvailable())
+    // create texture from PNG file
+    sf::Texture sampleTexture;
+    if (!sampleTexture.loadFromFile("resources/shader/icon-small.png"))
     {
-        std::cerr << "Shader are not available" << std::endl;
-        return -1;
+        throw std::runtime_error("Error while loading texture");
     }
+    // enable the smooth filter. the texture appears smoother so that pixels are less noticeable
+    sampleTexture.setSmooth(true);
 
-    // load shader
-    sf::Shader shader;
-    if (!shader.loadFromFile(shaderFiles[currentShaderIndex], sf::Shader::Fragment))
-    {
-        std::cerr << "Error while shaders" << std::endl;
-        return -1;
-    }
+    sf::Font font;
+    font.loadFromFile("resources/font/Roboto-Light.ttf");
+
+    sf::Text text;
+    text.setFont(font);
+    text.setFillColor(sf::Color::Blue);
+    text.setPosition(sf::Vector2f(10.0, 10.0));
 
     sf::Clock time;
     while (window.isOpen())
@@ -72,28 +66,31 @@ int main()
                     {
                         window.close();
                     }
-                    else
+                    else if (event.key.code == sf::Keyboard::Enter)
                     {
-                        currentShaderIndex = (currentShaderIndex + 1) % shaderFiles.size();
-                        if (!shader.loadFromFile(shaderFiles[currentShaderIndex],
-                                                 sf::Shader::Fragment))
-                        {
-                            std::cerr << "Error while shaders" << std::endl;
-                            return -1;
-                        }
+                        shaderIndex = (shaderIndex + 1) % (int)shaders.size();
+                    }
+                    else if (event.key.code == sf::Keyboard::Space)
+                    {
+                        shaderIndex =
+                            shaderIndex - 1
+                            + shaders.size() * ((shaders.size() - shaderIndex) / shaders.size());
                     }
             }
         }
 
-        // set shader parameters
-        shader.setUniform("time", time.getElapsedTime().asSeconds());
+        texture.update(window);
 
-        // clear the window and apply grey background
-        window.clear(sf::Color(127, 127, 127));
+        shaders[shaderIndex].setUniform("time", time.getElapsedTime().asSeconds());
+        shaders[shaderIndex].setUniform("currentTexture", sampleTexture);
+
+        text.setString(std::to_string(shaderIndex) + " " + shaderNames[shaderIndex]);
+
+        window.clear();
 
         // Draw the sprite and apply shader
-        sprite.setPosition(window.getSize().x / 2, window.getSize().y / 2);
-        window.draw(sprite, &shader);
+        window.draw(sprite, &shaders[shaderIndex]);
+        window.draw(text);
 
         window.display();
     }
